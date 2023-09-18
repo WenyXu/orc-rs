@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use snafu::{OptionExt,};
-use crate::arrow_reader::column::{Column, NullableIterator};
+use snafu::OptionExt;
+
 use crate::arrow_reader::column::present::new_present_iter;
+use crate::arrow_reader::column::{Column, NullableIterator};
 use crate::error;
 use crate::proto::stream::Kind;
 use crate::reader::decode::rle_v2::RleReaderV2;
@@ -24,10 +25,11 @@ use crate::reader::decompress::Decompressor;
 pub fn new_binary_iterator(column: &Column) -> error::Result<NullableIterator<Vec<u8>>> {
     let null_mask = new_present_iter(column)?.try_collect::<Vec<_>>()?;
 
-    let decompressor_opt = column.stream(Kind::Data).transpose()?;
-    let values = decompressor_opt.map(|reader| {
-        Box::new(Values::new(reader, vec![]))
-    }).unwrap();
+    let values = column
+        .stream(Kind::Data)
+        .transpose()?
+        .map(|reader| Box::new(Values::new(reader, vec![])))
+        .context(error::InvalidColumnSnafu { name: &column.name })?;
     let lengths = column
         .stream(Kind::Length)
         .transpose()?
@@ -42,7 +44,7 @@ pub fn new_binary_iterator(column: &Column) -> error::Result<NullableIterator<Ve
 
 pub struct DirectBinaryIterator {
     values: Box<Values<Decompressor>>,
-    lengths: Box<dyn Iterator<Item=error::Result<i64>> + Send>,
+    lengths: Box<dyn Iterator<Item = error::Result<i64>> + Send>,
 }
 
 impl Iterator for DirectBinaryIterator {

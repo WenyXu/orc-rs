@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use std::io::{Read, Seek};
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, BinaryArray, BooleanArray, DictionaryArray, PrimitiveArray, StringArray};
+use arrow::array::{
+    ArrayRef, BinaryArray, BooleanArray, DictionaryArray, PrimitiveArray, StringArray,
+};
 use arrow::datatypes::{
     Date32Type, Int16Type, Int32Type, Int64Type, Schema, SchemaRef, TimestampNanosecondType,
 };
@@ -12,9 +14,9 @@ use arrow::error::ArrowError;
 use arrow::record_batch::{RecordBatch, RecordBatchReader};
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
 use snafu::{OptionExt, ResultExt};
-use crate::arrow_reader::column::binary::new_binary_iterator;
 
 use self::column::Column;
+use crate::arrow_reader::column::binary::new_binary_iterator;
 use crate::arrow_reader::column::boolean::new_boolean_iter;
 use crate::arrow_reader::column::date::{new_date_iter, UNIX_EPOCH_FROM_CE};
 use crate::arrow_reader::column::float::{new_f32_iter, new_f64_iter};
@@ -289,13 +291,11 @@ impl NaiveStripeDecoder {
                 },
                 Decoder::Binary(binary) => match binary.collect_chunk(chunk).transpose()? {
                     Some(values) => {
-                        let ref_vec = values.iter().map(|opt| {
-                            opt.as_deref()
-                        }).collect::<Vec<_>>();
+                        let ref_vec = values.iter().map(|opt| opt.as_deref()).collect::<Vec<_>>();
                         fields.push(Arc::new(BinaryArray::from_opt_vec(ref_vec)) as ArrayRef);
                     }
                     None => break,
-                }
+                },
             }
         }
 
