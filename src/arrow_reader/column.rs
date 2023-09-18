@@ -19,6 +19,7 @@ pub mod int;
 pub mod present;
 pub mod string;
 pub mod timestamp;
+pub mod binary;
 
 #[derive(Debug)]
 pub struct Column {

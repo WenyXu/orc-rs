@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::io::{Read, Seek};
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, BooleanArray, DictionaryArray, PrimitiveArray, StringArray};
+use arrow::array::{ArrayRef, BinaryArray, BooleanArray, DictionaryArray, PrimitiveArray, StringArray};
 use arrow::datatypes::{
     Date32Type, Int16Type, Int32Type, Int64Type, Schema, SchemaRef, TimestampNanosecondType,
 };
@@ -12,6 +12,7 @@ use arrow::error::ArrowError;
 use arrow::record_batch::{RecordBatch, RecordBatchReader};
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
 use snafu::{OptionExt, ResultExt};
+use crate::arrow_reader::column::binary::new_binary_iterator;
 
 use self::column::Column;
 use crate::arrow_reader::column::boolean::new_boolean_iter;
@@ -119,6 +120,7 @@ pub enum Decoder {
     Timestamp(NullableIterator<NaiveDateTime>),
     Date(NullableIterator<NaiveDate>),
     String(StringDecoder),
+    Binary(NullableIterator<Vec<u8>>),
 }
 
 pub struct NaiveStripeDecoder {
@@ -285,6 +287,15 @@ impl NaiveStripeDecoder {
                         }
                     }
                 },
+                Decoder::Binary(binary) => match binary.collect_chunk(chunk).transpose()? {
+                    Some(values) => {
+                        let ref_vec = values.iter().map(|opt| {
+                            opt.as_deref()
+                        }).collect::<Vec<_>>();
+                        fields.push(Arc::new(BinaryArray::from_opt_vec(ref_vec)) as ArrayRef);
+                    }
+                    None => break,
+                }
             }
         }
 
@@ -325,7 +336,7 @@ impl NaiveStripeDecoder {
                 crate::proto::r#type::Kind::Float => Decoder::Float32(new_f32_iter(col)?),
                 crate::proto::r#type::Kind::Double => Decoder::Float64(new_f64_iter(col)?),
                 crate::proto::r#type::Kind::String => Decoder::String(StringDecoder::new(col)?),
-                crate::proto::r#type::Kind::Binary => todo!(),
+                crate::proto::r#type::Kind::Binary => Decoder::Binary(new_binary_iterator(col)?),
                 crate::proto::r#type::Kind::Timestamp => {
                     Decoder::Timestamp(new_timestamp_iter(col)?)
                 }
