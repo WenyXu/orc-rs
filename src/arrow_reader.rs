@@ -308,13 +308,11 @@ impl NaiveStripeDecoder {
                 .fields
                 .into_iter()
                 .map(|field| field.name())
-                .zip(fields.into_iter())
+                .zip(fields)
                 .collect::<Vec<_>>();
 
             Ok(Some(
                 RecordBatch::try_from_iter(fields).context(error::ConvertRecordBatchSnafu)?,
-                // RecordBatch::try_new(self.schema_ref.clone(), fields)
-                //     .context(error::ConvertRecordBatchSnafu)?,
             ))
         }
     }
