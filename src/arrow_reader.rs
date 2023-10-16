@@ -249,7 +249,8 @@ impl NaiveStripeDecoder {
                     Some(values) => {
                         let iter = values
                             .into_iter()
-                            .map(|value| value.map(|value| value.timestamp_nanos()));
+                            .map(|value| value.map(|value| value.timestamp_nanos_opt()))
+                            .flatten();
                         fields.push(
                             Arc::new(PrimitiveArray::<TimestampNanosecondType>::from_iter(iter))
                                 as ArrayRef,
