@@ -1,3 +1,7 @@
+> [!WARNING]  
+> This repository has been moved to [datafusion-contrib/datafusion-orc](https://github.com/datafusion-contrib/datafusion-orc)
+
+
 # ORC-RS
 
 [![test](https://github.com/wenyxu/orc-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/wenyxu/orc-rs/actions/workflows/ci.yml)
